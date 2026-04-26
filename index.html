@@ -232,9 +232,11 @@ canvas#rsiChart{display:block;width:100%;height:100%;}
 <!-- MARKET TABS -->
 <div class="mkt-row">
   <button class="mkt-tab boom on" data-sym="BOOM1000"  onclick="switchMkt('BOOM1000',this)">BOOM 1000</button>
+  <button class="mkt-tab boom"    data-sym="BOOM900"   onclick="switchMkt('BOOM900',this)">BOOM 900</button>
   <button class="mkt-tab boom"    data-sym="BOOM600"   onclick="switchMkt('BOOM600',this)">BOOM 600</button>
   <button class="mkt-tab boom"    data-sym="BOOM500"   onclick="switchMkt('BOOM500',this)">BOOM 500</button>
   <button class="mkt-tab crash"   data-sym="CRASH1000" onclick="switchMkt('CRASH1000',this)">CRASH 1000</button>
+  <button class="mkt-tab crash"   data-sym="CRASH900"  onclick="switchMkt('CRASH900',this)">CRASH 900</button>
   <button class="mkt-tab crash"   data-sym="CRASH600"  onclick="switchMkt('CRASH600',this)">CRASH 600</button>
   <button class="mkt-tab crash"   data-sym="CRASH500"  onclick="switchMkt('CRASH500',this)">CRASH 500</button>
 </div>
@@ -254,6 +256,20 @@ canvas#rsiChart{display:block;width:100%;height:100%;}
     <div>
       <div class="prob-mini-bar"><div class="prob-mini-fill" id="probMiniFill" style="width:0%;background:var(--t3)"></div></div>
     </div>
+  </div>
+</div>
+
+<!-- GLOBAL PREDICTION ALERT BANNER -->
+<div id="globalAlert" style="display:none;flex-shrink:0;padding:8px 12px;border-bottom:1px solid var(--border);animation:sld .2s ease;">
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+    <div style="display:flex;align-items:center;gap:8px;">
+      <div id="gAlertDot" style="width:8px;height:8px;border-radius:50%;flex-shrink:0;animation:blink 1s ease infinite;"></div>
+      <div>
+        <div id="gAlertTitle" style="font-family:var(--sans);font-size:11px;font-weight:700;"></div>
+        <div id="gAlertSub" style="font-size:9px;color:var(--t2);margin-top:1px;"></div>
+      </div>
+    </div>
+    <div id="gAlertProb" style="font-family:var(--sans);font-size:18px;font-weight:800;flex-shrink:0;"></div>
   </div>
 </div>
 
@@ -506,19 +522,19 @@ canvas#rsiChart{display:block;width:100%;height:100%;}
 const C = { mt:.15, mw:3, am:3.0, ap:14, wr:.65, zs:2.5, mp:20, bs:300 };
 
 const DISPLAY = {
-  BOOM1000:'BOOM 1000', BOOM600:'BOOM 600', BOOM500:'BOOM 500',
-  CRASH1000:'CRASH 1000', CRASH600:'CRASH 600', CRASH500:'CRASH 500'
+  BOOM1000:'BOOM 1000', BOOM900:'BOOM 900', BOOM600:'BOOM 600', BOOM500:'BOOM 500',
+  CRASH1000:'CRASH 1000', CRASH900:'CRASH 900', CRASH600:'CRASH 600', CRASH500:'CRASH 500'
 };
 
 // Average spike intervals per instrument
 const AVG_INTERVAL = {
-  BOOM1000:1000, BOOM600:600, BOOM500:500,
-  CRASH1000:1000, CRASH600:600, CRASH500:500
+  BOOM1000:1000, BOOM900:900, BOOM600:600, BOOM500:500,
+  CRASH1000:1000, CRASH900:900, CRASH600:600, CRASH500:500
 };
 
 const BASE_PRICE = {
-  BOOM1000:9800, BOOM600:5800, BOOM500:4900,
-  CRASH1000:9800, CRASH600:5800, CRASH500:4900
+  BOOM1000:9800, BOOM900:8800, BOOM600:5800, BOOM500:4900,
+  CRASH1000:9800, CRASH900:8800, CRASH600:5800, CRASH500:4900
 };
 
 // ══════════════════════════════════════════════════════════
@@ -724,6 +740,7 @@ function spikeProb() {
   const m=S.mkt;
   if(m.includes('500')) return .020;
   if(m.includes('600')) return .016;
+  if(m.includes('900')) return .011;
   return .009;
 }
 
@@ -971,78 +988,187 @@ function computePrediction() {
     bb:    Math.round(p6*100),
     total: Math.round(total*100)
   };
+  updateGlobalAlert();
 }
 
 // ══════════════════════════════════════════════════════════
-//  SPIKE DETECTION ENGINE (5 layers)
+//  GLOBAL PREDICTION ALERT — visible on ALL tabs
 // ══════════════════════════════════════════════════════════
+let lastGlobalAlertLevel = 0; // 0=none, 1=watch, 2=standby, 3=imminent
+
+function updateGlobalAlert() {
+  const tp = S.pred.total;
+  const banner = document.getElementById('globalAlert');
+  const dot    = document.getElementById('gAlertDot');
+  const title  = document.getElementById('gAlertTitle');
+  const sub    = document.getElementById('gAlertSub');
+  const prob   = document.getElementById('gAlertProb');
+  const dir    = S.isBoom ? '▲ RISE' : '▼ FALL';
+  const instr  = DISPLAY[S.mkt];
+
+  if(tp >= 90) {
+    banner.style.display = 'block';
+    banner.style.background = 'rgba(255,69,96,.10)';
+    banner.style.borderBottomColor = 'rgba(255,69,96,.45)';
+    dot.style.background = 'var(--dn)';
+    title.style.color = 'var(--dn)';
+    title.textContent = `⚡ SPIKE IMMINENT — ${instr}`;
+    sub.textContent   = `Expected: ${dir} · Wait for spike to complete, then enter`;
+    prob.textContent  = tp + '%';
+    prob.style.color  = 'var(--dn)';
+    // Fire toast only when crossing threshold
+    if(lastGlobalAlertLevel < 3){
+      toast('⚡ SPIKE IMMINENT', `${instr} — ${dir} · ${tp}% probability`, 'd');
+      beep('c');
+    }
+    lastGlobalAlertLevel = 3;
+  } else if(tp >= 75) {
+    banner.style.display = 'block';
+    banner.style.background = 'rgba(255,140,0,.07)';
+    banner.style.borderBottomColor = 'rgba(255,140,0,.4)';
+    dot.style.background = '#ff8c00';
+    title.style.color = '#ff8c00';
+    title.textContent = `⚠ STANDBY — ${instr}`;
+    sub.textContent   = `Spike zone active · Direction: ${dir}`;
+    prob.textContent  = tp + '%';
+    prob.style.color  = '#ff8c00';
+    if(lastGlobalAlertLevel < 2){
+      toast('⚠ Spike Standby', `${instr} — ${dir} · ${tp}% probability`, 'w');
+      beep('h');
+    }
+    lastGlobalAlertLevel = 2;
+  } else if(tp >= 60) {
+    banner.style.display = 'block';
+    banner.style.background = 'rgba(245,166,35,.05)';
+    banner.style.borderBottomColor = 'rgba(245,166,35,.3)';
+    dot.style.background = 'var(--am)';
+    title.style.color = 'var(--am)';
+    title.textContent = `👀 WATCH — ${instr}`;
+    sub.textContent   = `Conditions developing · ${dir}`;
+    prob.textContent  = tp + '%';
+    prob.style.color  = 'var(--am)';
+    if(lastGlobalAlertLevel < 1){
+      toast('👀 Watch Zone', `${instr} — ${tp}% probability building`, 'w');
+    }
+    lastGlobalAlertLevel = 1;
+  } else {
+    banner.style.display = 'none';
+    lastGlobalAlertLevel = 0;
+  }
+}
+
+
 const ALBL={momentum:'Momentum Burst',volatility:'Volatility Spike',wick_rejection:'Wick Rejection',statistical:'Statistical Outlier',divergence:'RSI Divergence'};
 
 function detectAll(candles) {
   if(candles.length<C.mp+2) return [];
-  const alerts=[], cls=candles.map(c=>c.close), hs=candles.map(c=>c.high), ls=candles.map(c=>c.low);
+  const candidates=[], cls=candles.map(c=>c.close), hs=candles.map(c=>c.high), ls=candles.map(c=>c.low);
   const MA=calcSMA(cls,C.mp), SD=calcSD(cls,C.mp), ATR=calcATRArr(candles,C.ap), RSI=calcRSIArr(cls,14);
   const boom=S.isBoom, crash=!S.isBoom;
+
+  // Tightened thresholds
+  const MT = Math.max(C.mt, 0.25);   // min 0.25% momentum
+  const AM = Math.max(C.am, 3.5);    // min 3.5x ATR
+  const ZS = Math.max(C.zs, 3.0);    // min 3.0 z-score
+  const WR = Math.max(C.wr, 0.70);   // min 70% wick
 
   for(let i=C.mp;i<candles.length;i++){
     const c=candles[i], pr=c.high-c.low, bd=Math.abs(c.close-c.open);
     if(pr===0) continue;
+
+    // Collect all layer hits for this candle
+    const hits=[];
+
     // L1 Momentum
     if(i>=C.mw){
       const pct=((c.close-cls[i-C.mw])/cls[i-C.mw])*100;
-      if(Math.abs(pct)>=C.mt){
+      if(Math.abs(pct)>=MT){
         const dir=pct>0?'up':'dn';
         if((boom&&dir==='up')||(crash&&dir==='dn')){
-          let sv='m'; if(Math.abs(pct)>C.mt*2)sv='c'; else if(Math.abs(pct)>C.mt*1.5)sv='h';
-          alerts.push({id:`m${i}`,type:'momentum',dir,time:c.time,price:c.close,ci:i,sv,msg:`${Math.abs(pct).toFixed(3)}% in ${C.mw} ticks`,conf:Math.min(95,60+Math.abs(pct)*10)});
+          let sv='m'; if(Math.abs(pct)>MT*2.2)sv='c'; else if(Math.abs(pct)>MT*1.6)sv='h';
+          hits.push({layer:1,dir,sv,msg:`${Math.abs(pct).toFixed(3)}% momentum`,conf:Math.min(95,60+Math.abs(pct)*10)});
         }
       }
     }
-    // L2 ATR
+    // L2 ATR — must be strong
     if(!isNaN(ATR[i])&&ATR[i]>0){
       const r=pr/ATR[i];
-      if(r>=C.am){
+      if(r>=AM){
         const dir=c.close>c.open?'up':'dn';
-        let sv='m'; if(r>C.am*2)sv='c'; else if(r>C.am*1.4)sv='h';
-        alerts.push({id:`v${i}`,type:'volatility',dir,time:c.time,price:c.close,ci:i,sv,msg:`${r.toFixed(1)}× ATR(${C.ap})`,conf:Math.min(95,55+(r-C.am)*15)});
-        // Record spike for pattern memory
-        if(sv==='c'||sv==='h'){
-          if(S.lastSpikeTickCount>0){
-            const interval=S.totalTicks-S.lastSpikeTickCount;
-            if(interval>10){
-              S.spikeIntervals.push(interval);
-              if(S.spikeIntervals.length>5) S.spikeIntervals.shift();
+        if((boom&&dir==='up')||(crash&&dir==='dn')){
+          let sv='m'; if(r>AM*2)sv='c'; else if(r>AM*1.4)sv='h';
+          hits.push({layer:2,dir,sv,msg:`${r.toFixed(1)}× ATR(${C.ap})`,conf:Math.min(95,60+(r-AM)*15)});
+          // Record spike
+          if(sv==='c'||sv==='h'){
+            if(S.lastSpikeTickCount>0){
+              const interval=S.totalTicks-S.lastSpikeTickCount;
+              if(interval>10){ S.spikeIntervals.push(interval); if(S.spikeIntervals.length>5) S.spikeIntervals.shift(); }
             }
+            S.lastSpikeTickCount=S.totalTicks; S.ticksSinceSpike=0;
           }
-          S.lastSpikeTickCount=S.totalTicks;
-          S.ticksSinceSpike=0;
         }
       }
     }
-    // L3 Wick
+    // L3 Wick — only if ATR also confirms on same candle
+    const atrRatio=(!isNaN(ATR[i])&&ATR[i]>0)?pr/ATR[i]:0;
+    const atrConfirms=atrRatio>=AM*0.7; // ATR at least 70% of threshold
     const uw=c.high-Math.max(c.open,c.close), lw=Math.min(c.open,c.close)-c.low;
-    if(boom&&uw/pr>=C.wr&&bd/pr<.3) alerts.push({id:`w${i}`,type:'wick_rejection',dir:'up',time:c.time,price:c.high,ci:i,sv:uw/pr>.8?'h':'m',msg:`Upper wick ${(uw/pr*100).toFixed(1)}%`,conf:Math.min(95,50+uw/pr*40)});
-    if(crash&&lw/pr>=C.wr&&bd/pr<.3) alerts.push({id:`w${i}`,type:'wick_rejection',dir:'dn',time:c.time,price:c.low,ci:i,sv:lw/pr>.8?'h':'m',msg:`Lower wick ${(lw/pr*100).toFixed(1)}%`,conf:Math.min(95,50+lw/pr*40)});
-    // L4 Z-score
+    if(boom&&uw/pr>=WR&&bd/pr<.25&&atrConfirms)
+      hits.push({layer:3,dir:'up',sv:uw/pr>.85?'h':'m',msg:`Upper wick ${(uw/pr*100).toFixed(1)}%`,conf:Math.min(95,55+uw/pr*40)});
+    if(crash&&lw/pr>=WR&&bd/pr<.25&&atrConfirms)
+      hits.push({layer:3,dir:'dn',sv:lw/pr>.85?'h':'m',msg:`Lower wick ${(lw/pr*100).toFixed(1)}%`,conf:Math.min(95,55+lw/pr*40)});
+    // L4 Z-score — raised threshold
     if(!isNaN(SD[i])&&SD[i]>0){
       const z=Math.abs((c.close-MA[i])/SD[i]);
-      if(z>=C.zs){
+      if(z>=ZS){
         const dir=c.close>MA[i]?'up':'dn';
-        let sv='m'; if(z>C.zs*1.5)sv='c'; else if(z>C.zs*1.2)sv='h';
-        alerts.push({id:`s${i}`,type:'statistical',dir,time:c.time,price:c.close,ci:i,sv,msg:`Z=${z.toFixed(2)}σ from SMA${C.mp}`,conf:Math.min(95,50+(z-C.zs)*15)});
+        if((boom&&dir==='up')||(crash&&dir==='dn')){
+          let sv='m'; if(z>ZS*1.5)sv='c'; else if(z>ZS*1.2)sv='h';
+          hits.push({layer:4,dir,sv,msg:`Z=${z.toFixed(2)}σ from SMA${C.mp}`,conf:Math.min(95,55+(z-ZS)*15)});
+        }
       }
     }
-    // L5 RSI divergence
+    // L5 RSI divergence — only high confidence
     if(i>=5&&!isNaN(RSI[i])){
       const pH=Math.max(...hs.slice(i-5,i)), pL=Math.min(...ls.slice(i-5,i));
-      if(boom&&c.high>pH&&RSI[i]<70&&RSI[i]<(RSI[i-2]||0))
-        alerts.push({id:`d${i}`,type:'divergence',dir:'up',time:c.time,price:c.high,ci:i,sv:'h',msg:'Bearish div: new high, RSI falling',conf:75});
-      if(crash&&c.low<pL&&RSI[i]>30&&RSI[i]>(RSI[i-2]||100))
-        alerts.push({id:`d${i}`,type:'divergence',dir:'dn',time:c.time,price:c.low,ci:i,sv:'h',msg:'Bullish div: new low, RSI rising',conf:75});
+      if(boom&&c.high>pH&&RSI[i]<65&&RSI[i]<(RSI[i-2]||0)&&(RSI[i-2]||0)-RSI[i]>3)
+        hits.push({layer:5,dir:'up',sv:'h',msg:'Bearish div: new high, RSI falling',conf:80});
+      if(crash&&c.low<pL&&RSI[i]>35&&RSI[i]>(RSI[i-2]||100)&&RSI[i]-(RSI[i-2]||100)>3)
+        hits.push({layer:5,dir:'dn',sv:'h',msg:'Bullish div: new low, RSI rising',conf:80});
     }
+
+    // ── MULTI-LAYER GATE: require at least 2 confirming layers ──
+    if(hits.length<2) continue;
+
+    // All hits must agree on direction
+    const dirs=new Set(hits.map(h=>h.dir));
+    if(dirs.size>1) continue; // conflicting directions — skip
+
+    const dir=hits[0].dir;
+    // Pick highest confidence hit as the representative
+    const best=hits.reduce((a,b)=>a.conf>b.conf?a:b);
+    // Escalate severity if multiple layers agree
+    let sv=best.sv;
+    if(hits.length>=3) sv='c';
+    else if(hits.length>=2&&best.sv==='h') sv='c';
+    else if(hits.length>=2) sv='h';
+
+    const layerNames=hits.map(h=>['','Momentum','ATR','Wick','Z-Score','RSI'][h.layer]).join('+');
+    const avgConf=Math.round(hits.reduce((a,b)=>a+b.conf,0)/hits.length);
+
+    candidates.push({
+      id:`ml${i}`,
+      type: hits.length>=3?'volatility': best.layer===3?'wick_rejection': best.layer===1?'momentum': best.layer===4?'statistical':'volatility',
+      dir, time:c.time, price:best.layer===3?(dir==='up'?c.high:c.low):c.close,
+      ci:i, sv, layers:hits.length,
+      msg:`${layerNames} [${hits.length} layers confirmed]`,
+      conf:Math.min(98,avgConf+hits.length*5)
+    });
   }
+
+  // Deduplicate by candle index
   const u=new Map();
-  for(const a of alerts){ const ex=u.get(a.ci); if(!ex||a.conf>ex.conf) u.set(a.ci,a); }
+  for(const a of candidates){ const ex=u.get(a.ci); if(!ex||a.conf>ex.conf) u.set(a.ci,a); }
   return Array.from(u.values());
 }
 
@@ -1381,6 +1507,8 @@ function startAll() {
   S.lastSpikeTickCount=0; S.tickTimes=[];
   candleAcc=null; lastAlertI=-1; wsEpIdx=0;
   S.pred={atr:0,pressure:0,rsi:0,pattern:0,velocity:0,bb:0,total:0};
+  lastGlobalAlertLevel=0;
+  document.getElementById('globalAlert').style.display='none';
 
   document.getElementById('startBtn').innerHTML='<svg viewBox="0 0 16 16" fill="currentColor"><rect x="3" y="2" width="4" height="12"/><rect x="9" y="2" width="4" height="12"/></svg>Stop';
   document.getElementById('startBtn').className='btn stop';
@@ -1408,6 +1536,8 @@ function switchMkt(mkt, btn) {
   S.spikeIntervals=[]; S.lastSpikeTickCount=0; S.tickTimes=[];
   lastAlertI=-1; candleAcc=null;
   S.pred={atr:0,pressure:0,rsi:0,pattern:0,velocity:0,bb:0,total:0};
+  lastGlobalAlertLevel=0;
+  document.getElementById('globalAlert').style.display='none';
   document.querySelectorAll('.mkt-tab').forEach(t=>t.classList.remove('on'));
   btn.classList.add('on');
   if(S.running){ wsClose(); stopSim(); setTimeout(()=>{ startSim(); setTimeout(wsConnect,400); },100); }
