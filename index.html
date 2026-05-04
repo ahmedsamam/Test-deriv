@@ -3,76 +3,72 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>OKCOMPUTER — Quantum v12</title>
+    <title>OKCOMPUTER — Compact v12.1</title>
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Syne:wght@800&display=swap" rel="stylesheet">
     <style>
         :root {
             --bg0: #020406; --bg1: #080c12; --bg2: #0f1720;
             --border: #1a222d; --up: #00ffaa; --dn: #ff2d55;
-            --bl: #00a2ff; --gl: #f0f4f8; --r: 14px;
+            --bl: #00a2ff; --gl: #f0f4f8; --r: 10px;
             --sans: 'Syne', sans-serif; --mono: 'IBM Plex Mono', monospace;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
         body { 
             height: 100dvh; background: var(--bg0); color: var(--gl); 
-            font-family: var(--mono); font-size: 13px; overflow: hidden;
+            font-family: var(--mono); font-size: 12px; overflow: hidden;
             display: flex; flex-direction: column;
         }
 
-        /* Header & Quantum Price */
-        .hdr { padding: 20px; background: var(--bg1); border-bottom: 1px solid var(--border); }
-        .price-label { font-size: 10px; color: var(--bl); font-weight: 800; letter-spacing: 2px; }
-        .price-val { font-family: var(--sans); font-size: 42px; line-height: 1; margin: 8px 0; letter-spacing: -2px; }
+        /* Compact Header */
+        .hdr { padding: 12px 15px; background: var(--bg1); border-bottom: 1px solid var(--border); }
+        .price-label { font-size: 9px; color: var(--bl); font-weight: 800; letter-spacing: 1px; }
+        .price-row { display: flex; justify-content: space-between; align-items: center; }
+        .price-val { font-family: var(--sans); font-size: 32px; letter-spacing: -1.5px; }
 
-        /* Market Selector */
-        .mkt-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; padding: 12px; background: var(--bg0); }
+        /* Market Selector - Reduced Height */
+        .mkt-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; padding: 8px; background: var(--bg0); }
         .mkt-btn { 
-            padding: 10px 0; background: var(--bg2); border: 1px solid var(--border);
-            border-radius: 8px; font-size: 10px; text-align: center; color: #5c708a; transition: 0.2s;
+            padding: 6px 0; background: var(--bg2); border: 1px solid var(--border);
+            border-radius: 6px; font-size: 9px; text-align: center; color: #5c708a;
         }
-        .mkt-btn.active { border-color: var(--bl); color: #fff; background: rgba(0, 162, 255, 0.15); box-shadow: 0 0 15px rgba(0, 162, 255, 0.2); }
+        .mkt-btn.active { border-color: var(--bl); color: #fff; background: rgba(0, 162, 255, 0.1); }
 
-        /* Quantum Metrics */
+        /* Metrics Bar - Slim */
         .metrics-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1px; background: var(--border); border-bottom: 1px solid var(--border); }
-        .m-box { background: var(--bg1); padding: 12px; text-align: center; }
-        .m-lbl { font-size: 8px; color: #5c708a; margin-bottom: 4px; text-transform: uppercase; }
-        .m-val { font-weight: 600; font-size: 14px; }
+        .m-box { background: var(--bg1); padding: 8px; text-align: center; }
+        .m-lbl { font-size: 7px; color: #5c708a; margin-bottom: 2px; }
+        .m-val { font-weight: 600; font-size: 12px; }
 
-        /* Main Display */
-        .stage { flex: 1; padding: 20px; overflow-y: auto; }
+        /* Main Display - Scaled Down */
+        .stage { flex: 1; padding: 12px; overflow-y: auto; display: flex; flex-direction: column; }
         .quantum-card { 
             background: linear-gradient(160deg, var(--bg2), var(--bg0));
-            border: 1px solid var(--border); border-radius: var(--r); padding: 25px;
-            position: relative; overflow: hidden; margin-bottom: 20px;
+            border: 1px solid var(--border); border-radius: var(--r); padding: 15px;
+            position: relative; margin-bottom: 12px; flex-shrink: 0;
         }
         
-        /* The Squeeze Visualizer */
-        .squeeze-bar { height: 4px; background: #000; border-radius: 2px; margin: 20px 0; overflow: hidden; display: flex; }
-        .sq-fill { height: 100%; transition: width 0.3s; }
-
-        /* Probability Pulse */
-        .prob-large { font-family: var(--sans); font-size: 68px; text-align: center; margin: 10px 0; position: relative; z-index: 2; }
-        .pulse-ring { 
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            width: 120px; height: 120px; border-radius: 50%; 
-            border: 2px solid var(--bl); opacity: 0;
+        .prob-large { font-family: var(--sans); font-size: 52px; text-align: center; margin: 5px 0; line-height: 1; }
+        
+        /* Compact Logs */
+        .log-container { flex: 1; overflow-y: auto; }
+        .log-row { 
+            background: var(--bg1); padding: 8px 12px; border-radius: 6px; 
+            margin-bottom: 4px; display: flex; justify-content: space-between; 
+            align-items: center; border-left: 2px solid transparent; font-size: 11px;
         }
-        .anim-pulse { animation: pulse 1.5s infinite; }
-        @keyframes pulse { 0% { width: 120px; height: 120px; opacity: 0.5; } 100% { width: 220px; height: 220px; opacity: 0; } }
-
-        /* Log Styling */
-        .log-row { background: var(--bg1); padding: 12px; border-radius: 10px; margin-bottom: 8px; display: flex; justify-content: space-between; border-left: 3px solid transparent; }
         .win { border-left-color: var(--up); }
         .miss { border-left-color: var(--dn); }
 
+        .squeeze-bar { height: 3px; background: #000; border-radius: 2px; margin: 12px 0; overflow: hidden; }
+        .sq-fill { height: 100%; transition: width 0.3s; }
+
         #masterAlert {
             position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(255, 45, 85, 0.2); border: 4px solid var(--dn);
-            z-index: 9999; pointer-events: none; display: none;
+            border: 6px solid var(--dn); z-index: 9999; pointer-events: none; display: none;
             animation: flash 0.3s infinite alternate;
         }
-        @keyframes flash { from { opacity: 0.2; } to { opacity: 0.8; } }
+        @keyframes flash { from { opacity: 0.1; } to { opacity: 0.5; } }
     </style>
 </head>
 <body>
@@ -80,60 +76,53 @@
 <div id="masterAlert"></div>
 
 <header class="hdr">
-    <div class="price-label">QUANTUM_LIVE_FEED</div>
-    <div class="price-row" style="display:flex; justify-content:space-between; align-items: flex-end;">
+    <div class="price-label">QUANTUM_V12.1_COMPACT</div>
+    <div class="price-row">
         <div id="price" class="price-val">0.00</div>
-        <div id="mktLabel" style="font-size:12px; color:var(--bl); padding-bottom:5px;">BOOM 1000</div>
+        <div id="mktLabel" style="font-size:10px; color:var(--bl); font-weight:800;">BOOM 1000</div>
     </div>
 </header>
 
 <div class="mkt-grid" id="mktGrid"></div>
 
 <div class="metrics-row">
-    <div class="m-box"><div class="m-lbl">Win Rate</div><div id="winRate" class="m-val" style="color:var(--up)">0%</div></div>
-    <div class="m-box"><div class="m-lbl">Volatility</div><div id="volVal" class="m-val">STABLE</div></div>
-    <div class="m-box"><div class="m-lbl">Squeeze</div><div id="sqVal" class="m-val">LOW</div></div>
+    <div class="m-box"><div class="m-lbl">WIN RATE</div><div id="winRate" class="m-val" style="color:var(--up)">0%</div></div>
+    <div class="m-box"><div class="m-lbl">VOLATILITY</div><div id="volVal" class="m-val">STABLE</div></div>
+    <div class="m-box"><div class="m-lbl">SQUEEZE</div><div id="sqVal" class="m-val">LOW</div></div>
 </div>
 
 <main class="stage">
     <div class="quantum-card">
-        <div id="pulse" class="pulse-ring"></div>
-        <div style="text-align:center; font-size:9px; color:#5c708a; letter-spacing:3px;">SPIKE PROBABILITY</div>
+        <div style="text-align:center; font-size:8px; color:#5c708a; letter-spacing:2px;">SPIKE PROBABILITY</div>
         <div id="probDisplay" class="prob-large">0%</div>
-        
-        <div class="squeeze-bar">
-            <div id="pBar" class="sq-fill" style="background:var(--bl); width:0%;"></div>
-        </div>
-
-        <div style="display:flex; justify-content:space-between; font-size:10px;">
-            <span id="tickStatus">TICK: 0 / 1000</span>
-            <span id="stateTxt" style="font-weight:600;">CALCULATING...</span>
+        <div class="squeeze-bar"><div id="pBar" class="sq-fill" style="background:var(--bl); width:0%;"></div></div>
+        <div style="display:flex; justify-content:space-between; font-size:9px;">
+            <span id="tickStatus">TICK: 0/1000</span>
+            <span id="stateTxt" style="font-weight:800; color:#5c708a">MONITORING</span>
         </div>
     </div>
 
-    <div style="font-size:10px; color:#5c708a; margin-bottom:12px; font-weight:800;">QUANTUM HISTORY LOG</div>
-    <div id="logs"></div>
+    <div style="font-size:9px; color:#5c708a; margin-bottom:8px; font-weight:800; letter-spacing:1px;">QUANTUM_HISTORY_LOG</div>
+    <div class="log-container" id="logs"></div>
 </main>
 
 <script>
     const mktConfigs = [
-        { id: 'B1000', name: 'BOOM 1000', avg: 1000, color: '#00ffaa' },
-        { id: 'B500', name: 'BOOM 500', avg: 500, color: '#00ffaa' },
-        { id: 'C1000', name: 'CRASH 1000', avg: 1000, color: '#ff2d55' },
-        { id: 'C500', name: 'CRASH 500', avg: 500, color: '#ff2d55' }
+        { id: 'B1000', avg: 1000, color: '#00ffaa' },
+        { id: 'B500', avg: 500, color: '#00ffaa' },
+        { id: 'C1000', avg: 1000, color: '#ff2d55' },
+        { id: 'C500', avg: 500, color: '#ff2d55' }
     ];
 
     let engine = {
         mkt: mktConfigs[0],
         price: 5000,
         ticks: 0,
-        history: [],
         lastPrices: [0,0,0,0,0],
         stats: { wins: 0, total: 0 },
         alertLevel: 0
     };
 
-    // UI Init
     const grid = document.getElementById('mktGrid');
     mktConfigs.forEach(m => {
         const b = document.createElement('div');
@@ -142,96 +131,67 @@
         b.onclick = () => {
             document.querySelectorAll('.mkt-btn').forEach(x => x.classList.remove('active'));
             b.classList.add('active');
-            engine.mkt = m;
-            engine.ticks = 0;
-            document.getElementById('mktLabel').innerText = m.name;
+            engine.mkt = m; engine.ticks = 0;
+            document.getElementById('mktLabel').innerText = m.id;
             document.getElementById('mktLabel').style.color = m.color;
         };
         grid.appendChild(b);
     });
 
-    function runEngine() {
-        // 1. Tick Updates
+    function run() {
         let change = (Math.random() * 0.4) - 0.2;
-        engine.price += change;
-        engine.ticks++;
-        engine.lastPrices.push(engine.price);
-        engine.lastPrices.shift();
+        engine.price += change; engine.ticks++;
+        engine.lastPrices.push(engine.price); engine.lastPrices.shift();
 
-        // 2. Quantum Probability Calculation (The "Expert" Math)
         let base = (engine.ticks / engine.mkt.avg) * 100;
-        
-        // Velocity Squeeze Detection
         let range = Math.max(...engine.lastPrices) - Math.min(...engine.lastPrices);
-        let squeezeFactor = range < 0.15 ? 12 : 0; // If price is stuck in narrow range, spike is loading
-        
-        let prob = Math.min(Math.round(base + squeezeFactor), 99);
+        let squeeze = range < 0.12 ? 15 : 0;
+        let prob = Math.min(Math.round(base + squeeze), 99);
 
-        // 3. UI Sync
         document.getElementById('price').innerText = engine.price.toFixed(2);
         document.getElementById('probDisplay').innerText = prob + '%';
         document.getElementById('pBar').style.width = prob + '%';
-        document.getElementById('tickStatus').innerText = `TICK: ${engine.ticks} / ${engine.mkt.avg}`;
+        document.getElementById('tickStatus').innerText = `TICK: ${engine.ticks}/${engine.mkt.avg}`;
         document.getElementById('volVal').innerText = range < 0.2 ? 'STABLE' : 'HIGH';
-        document.getElementById('sqVal').innerText = squeezeFactor > 0 ? 'CRITICAL' : 'NORMAL';
+        document.getElementById('sqVal').innerText = squeeze > 0 ? 'CRITICAL' : 'LOW';
 
-        // 4. Alert States
         const alertOverlay = document.getElementById('masterAlert');
-        const pulse = document.getElementById('pulse');
         const stateTxt = document.getElementById('stateTxt');
 
         if (prob >= 90) {
             engine.alertLevel = 2;
             alertOverlay.style.display = 'block';
-            pulse.classList.add('anim-pulse');
-            stateTxt.innerText = "EXECUTE NOW";
-            stateTxt.style.color = "var(--dn)";
+            stateTxt.innerText = "EXECUTE"; stateTxt.style.color = "var(--dn)";
         } else if (prob >= 75) {
             engine.alertLevel = 1;
             alertOverlay.style.display = 'none';
-            pulse.classList.add('anim-pulse');
-            stateTxt.innerText = "PREPARING...";
-            stateTxt.style.color = "#f5a623";
+            stateTxt.innerText = "PREPARE"; stateTxt.style.color = "#f5a623";
         } else {
             engine.alertLevel = 0;
             alertOverlay.style.display = 'none';
-            pulse.classList.remove('anim-pulse');
-            stateTxt.innerText = "MONITORING";
-            stateTxt.style.color = "#5c708a";
+            stateTxt.innerText = "MONITORING"; stateTxt.style.color = "#5c708a";
         }
 
-        // 5. Spike Simulator (Historical Backtest)
-        if (Math.random() > 0.993) {
-            let spike = (Math.random() * 30) + 15;
+        if (Math.random() > 0.994) {
+            let spike = (Math.random() * 25) + 15;
             engine.price += (engine.mkt.id.startsWith('B')) ? spike : -spike;
             logEvent(engine.alertLevel >= 1 ? 'WIN' : 'MISS');
             engine.ticks = 0;
         }
-
-        if (engine.ticks > engine.mkt.avg * 1.3) {
-            logEvent('MISS');
-            engine.ticks = 0;
-        }
+        if (engine.ticks > engine.mkt.avg * 1.3) { logEvent('MISS'); engine.ticks = 0; }
     }
 
     function logEvent(type) {
         const logs = document.getElementById('logs');
         const row = document.createElement('div');
         row.className = `log-row ${type.toLowerCase()}`;
-        row.innerHTML = `
-            <div>
-                <div style="font-weight:600">${engine.mkt.id} Signal</div>
-                <div style="font-size:9px; color:#5c708a">Confirmed @ ${engine.ticks} ticks</div>
-            </div>
-            <div style="font-weight:800; color:${type==='WIN'?'var(--up)':'var(--dn)'}">${type}</div>
-        `;
+        row.innerHTML = `<span>${engine.mkt.id} SIGNAL</span><span style="font-weight:800; color:${type==='WIN'?'var(--up)':'var(--dn)'}">${type}</span>`;
         logs.prepend(row);
-        engine.stats.total++;
-        if(type === 'WIN') engine.stats.wins++;
+        engine.stats.total++; if(type === 'WIN') engine.stats.wins++;
         document.getElementById('winRate').innerText = Math.round((engine.stats.wins/engine.stats.total)*100) + '%';
     }
 
-    setInterval(runEngine, 650);
+    setInterval(run, 650);
 </script>
 </body>
 </html>
